@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <title>Task List</title>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+          <div class="col s12">
+            <div id="main" class="card">
+              <div class="card-content">
+                <span class="card-title">Clever Task List</span>
+                <div class="row">
+                  <form id="task-form">
+                    <div class="input-field col s12">
+                      <input type="text" name="task" id="task">
+                      <label for="task">New Task</label>
+                    </div>
+                    <input type="submit" value="Add Task" class="btn" id="addbt">
+                    <input style="display:none" type="submit" value="Update Task" class="btn" id="btn-update">
+                  </form>
+                </div>
+              </div>
+              <div class="card-action">
+                <h5 id="task-title">Tasks</h5>
+                <div class="input-field col s12">
+                  <input type="text" name="filter" id="filter">
+                  <label for="filter">Filter Tasks</label>
+                </div>
+                <ul class="collection"></ul>
+                <a href="#" class="clear-tasks btn black">Clear Tasks</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <script
+  src="https://code.jquery.com/jquery-3.5.1.js"
+  integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+  crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+
+const form = document.querySelector("#task-form");
+const taskList = document.querySelector(".collection");
+const clearBtn = document.querySelector(".clear-tasks");
+const filter = document.querySelector("#filter");
+const taskInput = document.querySelector("#task");
+const copyBtn = document.querySelector(".collection")
+const editBtn = document.querySelector(".collection")
+const button = document.querySelector("#addbt")
+const updateBtn = document.querySelector("#btn-update")
+
+
+loadEventListeners();
+
+function loadEventListeners() {
+
+  document.addEventListener("DOMContentLoaded", getTasks);
+  
+  form.addEventListener("submit", addTask);
+
+  taskList.addEventListener("click", removeTask);
+
+  filter.addEventListener("keyup", filterTask);
+
+  copyBtn.addEventListener("click", copyTask);
+
+  editBtn.addEventListener("click", editTask);
+
+}
+
+
+let todos;
+async function getTasks(e) {
+
+ let res = await fetch('/api/data')
+
+ const tasks = await res.json();
+
+  tasks.forEach((task) => {
+
+    const li = document.createElement("li");
+
+    li.className = "collection-item";
+
+    li.setAttribute('id', task.id)
+    
+    const span = document.createElement("p");
+    
+    span.textContent = task.todo
+    
+    li.appendChild(span)
+    
+    const date = document.createElement("a");
+    
+    const copy = document.createElement("a");
+    
+    const edit = document.createElement("a");
+    
+    
+    const link = document.createElement("a");
+    
+    date.className = "date-on secondary-content";
+    
+    date.innerHtml = '<i class="fa fa-date"></i>'
+    
+    copy.innerHTML = '<i class="fa fa-copy"></i>';
+
+    copy.className = "copy-item secondary-content";
+    
+    edit.innerHTML = '<i class="fa fa-edit"></i>';
+    
+    edit.className = "edit-item secondary-content";
+    
+    link.className = "delete-item secondary-content";
+    
+    link.innerHTML = '<i class="fa fa-remove"></i>';
+    
+    
+    date.textContent = task.date
+    
+    li.appendChild(date);
+    
+    li.appendChild(copy)
+    
+    li.appendChild(edit)
+    
+    li.appendChild(link);
+    
+    taskList.appendChild(li);
+    
+  });
+
+}
+
+function addTask(e) {
+
+  e.preventDefault();
+ 
+if(button.value === "update"){
+    
+    const updateElemId  = button.dataset.editId
+    
+    const liUpdate = document.getElementById(updateElemId);
+
+    liUpdate.querySelector('p').textContent = taskInput.value;
+
+    button.value = "add task"
+
+    let text = taskInput.value
+
+    fetch(`/api/data/${updateElemId}`,{
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "put",
+  body: JSON.stringify({
+      todo: text,
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if(data.success){
+      location.reload()
+    }
+  })
+.catch(err =>{
+  return err
+})
+
+taskInput.value = "";
+
+  }
+  else{
+    if (taskInput.value === "") {
+
+    alert("Please enter a task");
+  }
+    const li = document.createElement("li");
+  
+    li.className = "collection-item";
+  
+    const span = document.createElement("p");
+    
+    todos = {}
+
+    todos.todo = taskInput.value
+    
+    let newDate= new Date()
+    todos.id = newDate.getTime()
+    
+    span.textContent = todos.todo
+    
+    li.appendChild(span)
+    
+    const date = document.createElement("a");
+    
+    const copy = document.createElement("a");
+    
+    const edit = document.createElement("a");
+  
+    const link = document.createElement("a");
+  
+    li.id = todos.id;
+  
+    link.className = "delete-item secondary-content";
+    
+    link.innerHTML = '<i class="fa fa-remove"></i>';
+  
+    date.className = "date-on secondary-content";
+    
+    date.innerHtml = '<i class="fa fa-date"></i>'
+    
+    copy.innerHTML = '<i class="fa fa-copy"></i>';
+    
+    copy.className = "copy-item secondary-content";
+    
+    edit.innerHTML = '<i class="fa fa-edit"></i>';
+    
+    edit.className = "edit-item secondary-content";
+    
+    let today  =  new Date();
+    
+    const months = ["Jan", "Feb", "March", "April", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
+    
+    let day = today.getDate()+' '+(months[today.getMonth()])+','+today.getFullYear();
+    
+    date.textContent = day
+
+    todos.date = day;
+  
+    console.log(todos)
+  
+    li.appendChild(date);
+    
+    li.appendChild(link);
+    
+    li.appendChild(copy)
+    
+    li.appendChild(edit)
+    
+    taskList.appendChild(li);
+  
+
+  fetch('/api/data',{
+    headers: {
+      "Content-Type": "application/json",
+  
+    },
+    method: "post",
+    body: JSON.stringify({
+      todo: todos.todo,
+      date: todos.date,
+      id: todos.id
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
+  })
+  .catch(error =>{
+    return err
+  })
+  
+  
+    taskInput.value = "";
+  
+  
+  e.preventDefault();
+  }
+}
+
+
+function removeTask(e) {
+  
+  if (e.target.parentElement.classList.contains("delete-item")) {
+    
+    if (confirm("Are you sure you want to remove")) {
+      e.target.parentElement.parentElement.remove();
+      
+    }
+    let id = e.target.parentElement.parentElement.id
+    console.log(id)
+fetch(`/api/data/${id}`,{
+  headers: {
+    "Content-Type": "application/json",
+
+  },
+  method: "delete",
+})
+.then(response => response.json())
+.then(data => {
+  if(data.success){
+    location.reload()
+  }
+})
+.catch(err =>{
+  return err
+})
+    }
+}
+
+
+function copyTask(e){
+      let copy = e.target.parentElement.parentElement.firstChild.textContent
+      navigator.clipboard.writeText(copy)
+  }
+
+
+function editTask(e){
+  
+  let edit = e.target.parentElement.parentElement.firstChild.textContent;
+
+  taskInput.value = edit
+  
+  button.value = "update";
+
+  console.log(e.target.parentElement.parentElement.id);
+
+  button.dataset.editId = e.target.parentElement.parentElement.id;
+  
+}
+
+
+function clearTasksFromLocalStorage() {
+  localStorage.clear();
+}
+
+function filterTask(e) {
+  const text = e.target.value.toLowerCase();
+
+  document.querySelectorAll(".collection-item").forEach(function (task) {
+    const item = task.firstChild.textContent;
+    if (item.toLowerCase().indexOf(text) != -1) {
+      task.style.display = "block";
+    } else {
+      task.style.display = "none";
+    }
+  });
+}
+  </script>
+</body>
+</html>
